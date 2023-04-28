@@ -1,0 +1,34 @@
+- name: Install strongSwan
+  ansible.builtin.package:
+    name:
+      - strongswan
+    state: latest
+
+- name: Configure strongSwan (from a template)
+  ansible.builtin.template:
+    src: files/etc/ipsec.conf.j2
+    dest: /etc/ipsec.conf
+    owner: root
+    group: root
+
+- name: Configure strongSwan secrets (from a template)
+  ansible.builtin.template:
+    src: files/etc/ipsec.secrets.j2
+    dest: /etc/ipsec.secrets
+    owner: root
+    group: root
+
+- name: Configure nat rules 1
+  shell: sudo iptables -t nat -A POSTROUTING -s 192.168.253.0/24 -o interface -m policy --dir out --pol ipsec -j ACCEPT
+
+- name: Configure nat rules 2 
+  shell: sudo iptables -t nat -A POSTROUTING -s 192.168.253.0/24 -o interface -j MASQUERADE
+
+- name: Configure nat rules 3
+  shell: |
+    sudo apt-get install iptables-persistent
+    sudo systemctl enable netfilter-persistent.service
+    sudo netfilter-persistent save
+
+- name: Restart ipsec
+  command: ipsec restart

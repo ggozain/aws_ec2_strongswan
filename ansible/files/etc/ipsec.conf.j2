@@ -1,0 +1,21 @@
+config setup
+        uniqueids=never
+        strictcrlpolicy=no
+conn jamf-private-access
+        left={{ client_ip }}
+        lefid=@wpa.wandera.com
+        leftsubnet={{ client_cidr }}
+	leftauth=psk
+        right={{ local_private_ip }}
+        rightsubnet={{ local_cidr }}
+	rightauth=psk
+        rightid=%any
+        auto=add
+	ike=aes256-sha512-modp2048!
+	esp=aes256-sha512-modp2048!
+        ikelifetime=28800s
+        lifetime=28800s
+        dpddelay=30s
+        dpdtimeout=120s
+        dpdaction=restart
+        keyexchange=ikev2
