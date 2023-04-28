@@ -116,7 +116,7 @@ module "ansible_provisioner" {
     "tunnel_psk=${var.tunnel_psk}"
   ]
 
-  playbook = "${path.module}/ansible/strongswan-install.yml"
+  playbook = "./ansible/strongswan-install.yml"
   dry_run  = false
 }
 
