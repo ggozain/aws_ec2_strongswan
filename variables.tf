@@ -31,15 +31,15 @@ variable "instance_size" {
 }
 
 # Networking
-variable "vpc_id" {
-  type        = string
-  description = "The ID of the VPC where the instance will be located"
-}
+# variable "vpc_id" {
+#   type        = string
+#   description = "The ID of the VPC where the instance will be located"
+# }
 
-variable "subnet_id" {
-  type        = string
-  description = "The ID of the subnet where the instance will be located"
-}
+# variable "subnet_id" {
+#   type        = string
+#   description = "The ID of the subnet where the instance will be located"
+# }
 
 # Security
 variable "key_pair" {

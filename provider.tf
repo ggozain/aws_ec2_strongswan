@@ -10,7 +10,7 @@ terraform {
   cloud {
     organization = "gozain-lab"
     workspaces {
-      name = "aws_eks"
+      name = "aws_ec2_strongswan"
     }
   }
 

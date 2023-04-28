@@ -6,6 +6,8 @@ environment = "test"
 tfcloud_organization  = "gozain-lab"
 tfcloud_workspace_vpc = "aws_vpc"
 
+vpc_id = data.tfe_outputs.vpc.values.vpc_id
+subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
 
 # VPN endpoint(s) configuration
 client_ip   = "18.130.213.235"
