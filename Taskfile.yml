@@ -9,4 +9,4 @@ tasks:
     cmds:
       - ansible-playbook --connection=local --inventory 127.0.0.1, --limit 127.0.0.1 
         --extra-vars "@{{.VPN_LOCALHOST_FILE}}" 
-        ../ansible/strongswan-install.yml
+        ./ansible/strongswan-install.yml
