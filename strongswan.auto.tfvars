@@ -1,11 +1,11 @@
 // AWS Region
-aws_region  = "eu-west-2"
+aws_region = "eu-west-2"
 
 // TF cloud details where the VPC module was applied from
 tfcloud_organization  = "gozain-lab"
 tfcloud_workspace_vpc = "aws_vpc"
 
-vpc_id = data.tfe_outputs.vpc.values.vpc_id
+vpc_id    = data.tfe_outputs.vpc.values.vpc_id
 subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
 
 # VPN endpoint(s) configuration
