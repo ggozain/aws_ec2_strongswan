@@ -103,6 +103,13 @@ resource "aws_instance" "vpn_server" {
   }
 }
 
+resource "null_resource" "install_ansible" {
+  provisioner "local-exec" {
+    command = "sudo apt-get update && sudo apt-get install -y ansible"
+  }
+}
+
+
 # This is being used to install and configure strongSwan / IPSec properly
 #
 # !!! NOTE !!!
