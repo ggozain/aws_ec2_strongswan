@@ -98,6 +98,8 @@ resource "aws_instance" "vpn_server" {
 
   vpc_security_group_ids = [aws_security_group.allow_vpn.id]
 
+  depends_on = [null_resource.install_ansible]
+
   tags = {
     Name = var.name
   }
