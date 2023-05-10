@@ -78,10 +78,10 @@ resource "aws_instance" "vpn_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_size
 
-  provisioner "local-exec" {
-    command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
-    working_dir = "${path.module}/ansible"
-  }
+  # provisioner "local-exec" {
+  #   command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+  #   working_dir = "${path.module}/ansible"
+  # }
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
   # We don't want the tunnel endpoint IP address to change (ever)
@@ -98,18 +98,16 @@ resource "aws_instance" "vpn_server" {
 
   vpc_security_group_ids = [aws_security_group.allow_vpn.id]
 
-  depends_on = [null_resource.install_ansible]
-
   tags = {
     Name = var.name
   }
 }
 
-resource "null_resource" "install_ansible" {
-  provisioner "local-exec" {
-    command = "su -c 'apt-get update && apt-get install -y ansible'"
-  }
-}
+# resource "null_resource" "install_ansible" {
+#   provisioner "local-exec" {
+#     command = "su -c 'apt-get update && apt-get install -y ansible'"
+#   }
+# }
 
 
 
@@ -127,23 +125,23 @@ resource "null_resource" "install_ansible" {
 # Links
 # https://wiki.strongswan.org/projects/strongswan/wiki/connsection
 # https://www.cisco.com/c/en/us/support/docs/ip/internet-key-exchange-ike/117258-config-l2l.html
-#
-# module "ansible_provisioner" {
-#   source = "github.com/cloudposse/tf_ansible"
 
-#   arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key ${data.aws_key_pair.vpn.private_key}"]
-#   envs = [
-#     "host=${aws_instance.vpn_server.public_ip}",
-#     "module_path=${path.module}",
-#     "client_ip=${var.client_ip}",
-#     "client_cidr=${var.client_cidr}",
-#     "local_cidr=${data.aws_vpc.selected.cidr_block}",
-#     "local_private_ip=${aws_instance.vpn_server.private_ip}",
-#     "local_public_ip=${aws_instance.vpn_server.public_ip}", # <--- This will be the IKE ID, see ipsec.conf for more info
-#     "tunnel_psk=${var.tunnel_psk}"
-#   ]
+module "ansible_provisioner" {
+  source = "github.com/cloudposse/tf_ansible"
 
-#   playbook = "./ansible/strongswan-install.yml"
-#   dry_run  = false
-# }
+  arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key ${local.strongswan_private_key}"]
+  envs = [
+    "host=${aws_instance.vpn_server.public_ip}",
+    "module_path=${path.module}",
+    "client_ip=${var.client_ip}",
+    "client_cidr=${var.client_cidr}",
+    "local_cidr=${data.aws_vpc.selected.cidr_block}",
+    "local_private_ip=${aws_instance.vpn_server.private_ip}",
+    "local_public_ip=${aws_instance.vpn_server.public_ip}", # <--- This will be the IKE ID, see ipsec.conf for more info
+    "tunnel_psk=${var.tunnel_psk}"
+  ]
+
+  playbook = "${path.module}/ansible/strongswan-install.yml"
+  dry_run  = false
+}
 
