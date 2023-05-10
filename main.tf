@@ -1,9 +1,10 @@
-# We are using a simple Ubuntu-based box
+// We need access to othe TF Cloud workspaces to gather their outputs
 data "tfe_outputs" "vpc" {
   organization = var.tfcloud_organization
   workspace    = var.tfcloud_workspace_vpc
 }
 
+# We are using a simple Ubuntu-based box
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -55,8 +56,19 @@ resource "aws_security_group" "allow_vpn" {
   }
 }
 
-data "aws_key_pair" "vpn" {
-  key_name = var.key_pair
+locals {
+  strongswan_private_key = tls_private_key.strongswan.private_key_pem
+  stongswan_public_key   = tls_private_key.strongswan.public_key_openssh
+}
+
+resource "tls_private_key" "strongswan" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "Strongswan"
+  public_key = local.stongswan_public_key
 }
 
 # The VPN EC2 instance itself
@@ -65,8 +77,10 @@ resource "aws_instance" "vpn_server" {
   # These should not be needed to be changed, nevertheless it's possible
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_size
+
   provisioner "local-exec" {
-    command = "ansible-playbook ./ansible/strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+    command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+    working_dir = "${path.module}/ansible"
   }
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
@@ -74,7 +88,7 @@ resource "aws_instance" "vpn_server" {
   associate_public_ip_address = true
 
   # See the variables descriptions for more info/details
-  key_name = var.key_pair
+  key_name = aws_key_pair.deployer.key_name
 
   # Where to set up the instance?
   subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
