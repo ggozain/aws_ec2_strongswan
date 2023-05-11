@@ -56,20 +56,20 @@ resource "aws_security_group" "allow_vpn" {
   }
 }
 
-locals {
-  strongswan_private_key = tls_private_key.strongswan.private_key_pem
-  stongswan_public_key   = tls_private_key.strongswan.public_key_openssh
-}
+# locals {
+#   strongswan_private_key = tls_private_key.strongswan.private_key_pem
+#   stongswan_public_key   = tls_private_key.strongswan.public_key_openssh
+# }
 
-resource "tls_private_key" "strongswan" {
-  algorithm = "RSA"
-  rsa_bits  = 2048
-}
+# resource "tls_private_key" "strongswan" {
+#   algorithm = "RSA"
+#   rsa_bits  = 2048
+# }
 
-resource "aws_key_pair" "deployer" {
-  key_name   = var.key_pair
-  public_key = local.stongswan_public_key
-}
+# resource "aws_key_pair" "deployer" {
+#   key_name   = var.key_pair
+#   public_key = local.stongswan_public_key
+# }
 
 # The VPN EC2 instance itself
 
