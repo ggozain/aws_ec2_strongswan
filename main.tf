@@ -90,7 +90,7 @@ resource "aws_instance" "vpn_server" {
   connection {
     type        = "ssh"
     user        = var.username
-    private_key = file(".ssh/TerraformCloud.pem")
+    private_key = file("./.ssh/TerraformCloud.pem")
     host        = self.public_ip
   }
 
