@@ -14,4 +14,4 @@ client_cidr = "192.168.253.0/24"
 tunnel_psk  = "pr0eqoe0dow5lt2hk0nkz2eqqtonwyqbp9t302m8"
 name        = "jamf-private-access-endpoint"
 key_pair    = "TerraformCloud"
-private_key = "AAABAAoneiFt/6OapwkjZ1O0ABy6KgJYH71ni3fQEejb85T0x+MgZDzwo6X9LX9+"
+private_key = file("./ssh/TerraformCloud.pem")
