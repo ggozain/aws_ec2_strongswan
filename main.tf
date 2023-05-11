@@ -101,8 +101,15 @@ resource "aws_instance" "vpn_server" {
       "sudo apt update",
       "sudo apt-add-repository -y ppa:ansible/ansible",
       "sudo apt-get install -y ansible",
-      "ansible-playbook ${path.module}/ansible/strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
     ]
+  }
+
+  provisioner "local-exec" {
+    command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+    working_dir = "${path.module}/ansible"
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "false"
+    }
   }
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
