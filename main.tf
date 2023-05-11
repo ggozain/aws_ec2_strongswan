@@ -107,7 +107,7 @@ resource "aws_instance" "vpn_server" {
   associate_public_ip_address = true
 
   # See the variables descriptions for more info/details
-  key_name = aws_key_pair.deployer.key_name
+  key_name = var.key_pair
 
 
 
