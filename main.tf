@@ -83,7 +83,8 @@ resource "aws_instance" "vpn_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              sudo apt-get update
+              sudo apt update
+              sudo apt-add-repository -y ppa:ansible/ansible
               sudo apt-get install -y ansible
               EOF
 
