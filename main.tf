@@ -78,6 +78,9 @@ resource "aws_instance" "vpn_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_size
 
+    # Where to set up the instance?
+  subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
+
   # provisioner "local-exec" {
   #   command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
   #   working_dir = "${path.module}/ansible"
@@ -85,16 +88,12 @@ resource "aws_instance" "vpn_server" {
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
   # We don't want the tunnel endpoint IP address to change (ever)
-  network_interface {
-    device_index         = 0
-    network_interface_id = data.tfe_outputs.vpc.values.nat_gateway_id[0]
-  }
+  associate_public_ip_address = true
 
   # See the variables descriptions for more info/details
   key_name = aws_key_pair.deployer.key_name
 
-  # Where to set up the instance?
-  subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
+
 
   # This needs to be off or the instance won't work as a router
   source_dest_check = false
