@@ -47,10 +47,10 @@ variable "key_pair" {
   description = "The name of the key pair that will be used while provisioning the new EC2 instance (needed for Ansible provisioning)"
 }
 
-variable "private_key" {
-  type        = string
-  description = "The private key to use when connecting to the EC2 instance (see: key_pair)"
-}
+# variable "private_key" {
+#   type        = string
+#   description = "The private key to use when connecting to the EC2 instance (see: key_pair)"
+# }
 
 variable "username" {
   type        = string

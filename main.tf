@@ -4,6 +4,10 @@ data "tfe_outputs" "vpc" {
   workspace    = var.tfcloud_workspace_vpc
 }
 
+data "local_file" "private_key" {
+  filename = "${path.module}/ssh/TerraformCloud.pem"
+}
+
 # We are using a simple Ubuntu-based box
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -155,7 +159,7 @@ resource "aws_instance" "vpn_server" {
 module "ansible_provisioner" {
   source = "github.com/cloudposse/tf_ansible"
 
-  arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key=${var.private_key}"]
+  arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key=${data.local_file.private_key.content}"]
   envs = [
     "host=${aws_instance.vpn_server.public_ip}",
     "module_path=${path.module}",
