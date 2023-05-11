@@ -81,12 +81,12 @@ resource "aws_instance" "vpn_server" {
   # Where to set up the instance?
   subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo apt update
-              sudo apt-add-repository -y ppa:ansible/ansible
-              sudo apt-get install -y ansible
-              EOF
+  # user_data = <<-EOF
+  #             #!/bin/bash
+  #             sudo apt update
+  #             sudo apt-add-repository -y ppa:ansible/ansible
+  #             sudo apt-get install -y ansible
+  #             EOF
 
   connection {
     type        = "ssh"
@@ -95,12 +95,14 @@ resource "aws_instance" "vpn_server" {
     host        = self.public_ip
   }
 
-  provisioner "local-exec" {
-    command     = "sleep 30 && ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
-    working_dir = "${path.module}/ansible"
-    environment = {
-      ANSIBLE_HOST_KEY_CHECKING = "false"
-    }
+  provisioner "remote-exec" {
+    inline = [
+      "sleep 30",
+      "sudo apt update",
+      "sudo apt-add-repository -y ppa:ansible/ansible",
+      "sudo apt-get install -y ansible",
+      "ansible-playbook ${path.module}/ansible/strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+    ]
   }
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
@@ -109,8 +111,6 @@ resource "aws_instance" "vpn_server" {
 
   # See the variables descriptions for more info/details
   key_name = var.key_pair
-
-
 
   # This needs to be off or the instance won't work as a router
   source_dest_check = false
