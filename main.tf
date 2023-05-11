@@ -67,7 +67,7 @@ resource "tls_private_key" "strongswan" {
 }
 
 resource "aws_key_pair" "deployer" {
-  key_name   = "Strongswan"
+  key_name   = var.key_pair
   public_key = local.stongswan_public_key
 }
 
@@ -85,7 +85,10 @@ resource "aws_instance" "vpn_server" {
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
   # We don't want the tunnel endpoint IP address to change (ever)
-  associate_public_ip_address = true
+  network_interface {
+    device_index         = 0
+    network_interface_id = data.tfe_outputs.vpc.values.nat_gateway_id[0]
+  }
 
   # See the variables descriptions for more info/details
   key_name = aws_key_pair.deployer.key_name
