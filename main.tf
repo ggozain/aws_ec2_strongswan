@@ -78,13 +78,29 @@ resource "aws_instance" "vpn_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_size
 
-    # Where to set up the instance?
+  # Where to set up the instance?
   subnet_id = data.tfe_outputs.vpc.values.public_subnet_id[0]
 
-  # provisioner "local-exec" {
-  #   command     = "ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
-  #   working_dir = "${path.module}/ansible"
-  # }
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get install -y ansible
+              EOF
+
+  connection {
+    type        = "ssh"
+    user        = var.username
+    private_key = file(".ssh/TerraformCloud.pem")
+    host        = self.public_ip
+  }
+
+  provisioner "local-exec" {
+    command     = "sleep 30 && ansible-playbook strongswan-install.yml -i ${self.public_ip}, --extra-vars 'host=${self.public_ip} module_path=${path.module} client_ip=${var.client_ip} client_cidr=${var.client_cidr} local_cidr=${data.aws_vpc.selected.cidr_block} local_private_ip=${aws_instance.vpn_server.private_ip} local_public_ip=${aws_instance.vpn_server.public_ip} tunnel_psk=${var.tunnel_psk}'"
+    working_dir = "${path.module}/ansible"
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "false"
+    }
+  }
 
   # FIXME: a public IP is fine for testing, but an ElasticIP is needed for production use!
   # We don't want the tunnel endpoint IP address to change (ever)
@@ -128,22 +144,22 @@ resource "aws_instance" "vpn_server" {
 # https://wiki.strongswan.org/projects/strongswan/wiki/connsection
 # https://www.cisco.com/c/en/us/support/docs/ip/internet-key-exchange-ike/117258-config-l2l.html
 
-module "ansible_provisioner" {
-  source = "github.com/cloudposse/tf_ansible"
+# module "ansible_provisioner" {
+#   source = "github.com/cloudposse/tf_ansible"
 
-  arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key ${local.strongswan_private_key}"]
-  envs = [
-    "host=${aws_instance.vpn_server.public_ip}",
-    "module_path=${path.module}",
-    "client_ip=${var.client_ip}",
-    "client_cidr=${var.client_cidr}",
-    "local_cidr=${data.aws_vpc.selected.cidr_block}",
-    "local_private_ip=${aws_instance.vpn_server.private_ip}",
-    "local_public_ip=${aws_instance.vpn_server.public_ip}", # <--- This will be the IKE ID, see ipsec.conf for more info
-    "tunnel_psk=${var.tunnel_psk}"
-  ]
+#   arguments = ["--ssh-common-args='-o StrictHostKeyChecking=no' --user=${var.username} --private-key TerraformCloud.pem"]
+#   envs = [
+#     "host=${aws_instance.vpn_server.public_ip}",
+#     "module_path=${path.module}",
+#     "client_ip=${var.client_ip}",
+#     "client_cidr=${var.client_cidr}",
+#     "local_cidr=${data.aws_vpc.selected.cidr_block}",
+#     "local_private_ip=${aws_instance.vpn_server.private_ip}",
+#     "local_public_ip=${aws_instance.vpn_server.public_ip}", # <--- This will be the IKE ID, see ipsec.conf for more info
+#     "tunnel_psk=${var.tunnel_psk}"
+#   ]
 
-  playbook = "ansible/strongswan-install.yml"
-  dry_run  = false
-}
+#   playbook = "ansible/strongswan-install.yml"
+#   dry_run  = false
+# }
 
