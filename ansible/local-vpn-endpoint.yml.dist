@@ -1,6 +1,6 @@
 ---
 # This controls whever the playbook will treat the setup as a "local installation" or not
-local_setup: true
+local_setup: false
 host: "127.0.0.1" # leave it be
 
 # The variables
